@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/base64"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -15,6 +16,9 @@ import (
 )
 
 var (
+	// If true, will fail if there's no secretmanager key and no default.
+	fail bool
+
 	region string
 	svc    *secretsmanager.SecretsManager
 
@@ -35,14 +39,23 @@ func init() {
 	}))
 
 	svc = secretsmanager.New(sess)
+
+	flag.BoolVar(&fail, "x", false, "Fail if the key is not found and there is no default set.")
+	flag.Usage = func() {
+		fmt.Fprintf(flag.CommandLine.Output(), "Usage:\n%s [options] FILE:\n", os.Args[0])
+		flag.PrintDefaults()
+	}
+
 }
 
 func main() {
-	path := os.Args[1]
+	flag.Parse()
+
+	path := flag.Arg(0)
 	if r, e := findAndReplace(path); e != nil {
 		fmt.Println(e)
 	} else {
-		fmt.Println(r)
+		print(r)
 	}
 }
 

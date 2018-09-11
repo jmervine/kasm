@@ -15,7 +15,7 @@ Current, it's pretty dumb, it makes the following assumtions:
     - Yes, the surrounding quotes are required.
     - `{{key}}` should be replaced with your exact secretmanager secrent name.
     - `{{default}}` is optional, but currently `kasm` will add a blank value when
-      the key is not found.
+      the key is not found without the `-x` flag.
 
 ## Example
 
