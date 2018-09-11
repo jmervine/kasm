@@ -15,9 +15,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 )
 
+const VERSION = "0.0.1"
+
 var (
 	// If true, will fail if there's no secretmanager key and no default.
-	fail bool
+	fail, ver bool
 
 	region string
 	svc    *secretsmanager.SecretsManager
@@ -41,15 +43,22 @@ func init() {
 	svc = secretsmanager.New(sess)
 
 	flag.BoolVar(&fail, "x", false, "Fail if the key is not found and there is no default set.")
+	flag.BoolVar(&ver, "v", false, "Display version.")
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage:\n%s [options] FILE:\n", os.Args[0])
 		flag.PrintDefaults()
+		os.Exit(0)
 	}
 
 }
 
 func main() {
 	flag.Parse()
+
+	if ver {
+		fmt.Printf("%s %s\n", os.Args[0], VERSION)
+		os.Exit(0)
+	}
 
 	path := flag.Arg(0)
 	if r, e := apply(path); e != nil {
