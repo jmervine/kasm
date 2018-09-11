@@ -55,7 +55,7 @@ func main() {
 	if r, e := apply(path); e != nil {
 		fmt.Println(e)
 	} else {
-		print(r)
+		fmt.Print(r)
 	}
 }
 
