@@ -1,5 +1,5 @@
 build:
-	go build -o kasm ./cmd/...
+	go build -o kasm ./...
 
 clean:
 	rm -fv kasm
