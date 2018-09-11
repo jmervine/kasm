@@ -1,0 +1,9 @@
+# file: config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-secrets
+type: Opaque
+data:
+  username: "{{ secretmanager "/some/username" "admin" }}"
+  password: "{{ secretmanager "/some/password" "change" }}"

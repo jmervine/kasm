@@ -22,7 +22,7 @@ var (
 	region string
 	svc    *secretsmanager.SecretsManager
 
-	pattern = regexp.MustCompile("\"secretmanager:[A-Za-z0-9\\/\\-\\_\\|]+\"")
+	pattern = regexp.MustCompile(`{{\s?secretmanager "([a-zA-Z0-9\\-\\_\\/]+)"(\s"([a-zA-Z0-9\\-\\_\\/]*)")?\s?}}`)
 	encode  = false
 	keys    = new([]string)
 )
@@ -52,14 +52,39 @@ func main() {
 	flag.Parse()
 
 	path := flag.Arg(0)
-	if r, e := findAndReplace(path); e != nil {
+	if r, e := apply(path); e != nil {
 		fmt.Println(e)
 	} else {
 		print(r)
 	}
 }
 
-func findAndReplace(path string) (string, error) {
+func findAndReplace(file string) string {
+	matches := pattern.FindAllStringSubmatch(file, -1)
+	for _, match := range matches {
+		orig := match[0]
+		key := match[1]
+		bak := match[3]
+
+		val, err := getSecret(key)
+		if err != nil && fail {
+			fmt.Println(err)
+			os.Exit(1)
+		} else if err != nil {
+			val = bak
+		}
+
+		if encode {
+			val = base64.StdEncoding.EncodeToString([]byte(val))
+		}
+
+		file = strings.Replace(file, orig, val, -1)
+	}
+
+	return file
+}
+
+func apply(path string) (string, error) {
 	dat, err := ioutil.ReadFile(path)
 	if err != nil {
 		return "", err
@@ -71,33 +96,7 @@ func findAndReplace(path string) (string, error) {
 		encode = true
 	}
 
-	matches := pattern.FindAllString(file, -1)
-
-	for _, match := range matches {
-
-		key := strings.TrimPrefix(match, "\"secretmanager:")
-		key = strings.TrimSuffix(key, "\"")
-		parts := strings.SplitN(key, "|", 2)
-		key = parts[0]
-
-		var backup string
-		if len(parts) == 2 {
-			backup = parts[1]
-		}
-
-		val, err := getSecret(key)
-		if err != nil {
-			val = backup
-		}
-
-		if encode {
-			val = base64.StdEncoding.EncodeToString([]byte(val))
-		}
-
-		file = strings.Replace(file, match, val, -1)
-	}
-
-	return file, nil
+	return findAndReplace(file), nil
 }
 
 func getSecret(k string) (string, error) {
